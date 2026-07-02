@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard de Marketing Digital</title>
+<style>
+  :root{
+    --bg:#F6F7F5; --card:#FFFFFF; --border:#E2E5E0;
+    --ink:#1C2624; --ink-soft:#5B6660; --ink-faint:#8B958F;
+    --teal:#0F6E56; --teal-dark:#085041; --teal-light:#E1F5EE;
+    --coral:#D85A30; --coral-light:#FAECE7; --coral-dark:#712B13;
+    --blue:#185FA5; --blue-light:#E6F1FB; --blue-dark:#0C447C;
+    --amber:#854F0B; --amber-light:#FAEEDA;
+    --radius:12px; --radius-sm:8px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--ink); padding:32px 24px 64px; line-height:1.5;
+  }
+  .wrap{max-width:1180px; margin:0 auto;}
+
+  .topbar{display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:28px;}
+  .topbar h1{font-size:24px; font-weight:600; letter-spacing:-0.01em;}
+  .topbar p{font-size:13px; color:var(--ink-soft); margin-top:4px;}
+  .updated{font-size:12px; color:var(--ink-faint); text-align:right;}
+
+  .controls{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:14px 18px; margin-bottom:24px;
+  }
+  .seg{display:flex; background:var(--bg); border:1px solid var(--border); border-radius:999px; padding:3px; gap:2px;}
+  .seg button{
+    border:none; background:none; padding:7px 16px; font-size:13px; font-weight:500;
+    color:var(--ink-soft); border-radius:999px; cursor:pointer; transition:.15s;
+  }
+  .seg button.active{background:var(--teal); color:#fff;}
+
+  .channel-filter{display:flex; gap:8px; flex-wrap:wrap;}
+  .chip{
+    border:1px solid var(--border); background:var(--card); padding:6px 14px; font-size:12.5px;
+    font-weight:500; border-radius:999px; cursor:pointer; color:var(--ink-soft); transition:.15s;
+    display:flex; align-items:center; gap:6px;
+  }
+  .chip .dot{width:7px; height:7px; border-radius:50%; background:var(--ink-faint);}
+  .chip.active{border-color:transparent; color:#fff;}
+  .chip.active .dot{background:#fff;}
+  .chip[data-ch="campinas"].active{background:var(--teal);}
+  .chip[data-ch="indaiatuba"].active{background:var(--blue);}
+  .chip[data-ch="whatsapp"].active{background:var(--coral);}
+  .chip[data-ch="social"].active{background:var(--amber); color:var(--amber);}
+  .chip[data-ch="social"].active{background:#854F0B; color:#fff;}
+
+  .month-row{
+    display:flex; gap:6px; overflow-x:auto; margin-bottom:24px; padding-bottom:4px;
+  }
+  .month-row button{
+    flex:0 0 auto; border:1px solid var(--border); background:var(--card); color:var(--ink-soft);
+    font-size:12.5px; font-weight:500; padding:7px 13px; border-radius:8px; cursor:pointer; transition:.15s;
+  }
+  .month-row button.active{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .month-row button:disabled{opacity:.35; cursor:not-allowed;}
+
+  .kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:28px;}
+  .kpi{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+    padding:16px 16px 14px;
+  }
+  .kpi .label{font-size:12px; color:var(--ink-soft); font-weight:500; margin-bottom:8px; display:flex; align-items:center; gap:6px;}
+  .kpi .label .sw{width:8px;height:8px;border-radius:2px;}
+  .kpi .value{font-size:24px; font-weight:600; letter-spacing:-0.01em;}
+  .kpi .sub{font-size:11.5px; color:var(--ink-faint); margin-top:4px;}
+  .kpi .delta{font-size:11.5px; font-weight:600; margin-top:6px; display:inline-block; padding:2px 7px; border-radius:5px;}
+  .delta.up{background:var(--teal-light); color:var(--teal-dark);}
+  .delta.down{background:var(--coral-light); color:var(--coral-dark);}
+  .delta.flat{background:var(--bg); color:var(--ink-faint);}
+  .kpi .progress-track{background:var(--border); border-radius:999px; height:6px; margin-top:8px; overflow:hidden;}
+  .kpi .progress-fill{background:var(--amber); height:100%; border-radius:999px;}
+
+  .grid2{display:grid; grid-template-columns:1.4fr 1fr; gap:16px; margin-bottom:16px;}
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px;
+  }
+  .card h3{font-size:14px; font-weight:600; margin-bottom:2px;}
+  .card .card-sub{font-size:12px; color:var(--ink-soft); margin-bottom:16px;}
+  .chart-wrap{position:relative; width:100%;}
+
+  .legend{display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px; font-size:12px; color:var(--ink-soft);}
+  .legend span{display:flex; align-items:center; gap:6px;}
+  .legend .sw{width:10px; height:10px; border-radius:2px;}
+
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  thead th{
+    text-align:right; font-weight:500; color:var(--ink-soft); padding:7px 8px;
+    border-bottom:1px solid var(--border); white-space:nowrap;
+  }
+  thead th:first-child{text-align:left;}
+  tbody td{padding:7px 8px; text-align:right; border-bottom:1px solid var(--border); white-space:nowrap;}
+  tbody td:first-child{text-align:left; font-weight:500;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr.total td{font-weight:600; background:var(--bg);}
+  .section-title{font-size:16px; font-weight:600; margin:32px 0 14px;}
+
+  .funnel-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+  .funnel-card{background:var(--bg); border-radius:var(--radius-sm); padding:14px;}
+  .funnel-card .ftitle{font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:10px;}
+  .funnel-card .frow{display:flex; justify-content:space-between; font-size:12.5px; padding:4px 0;}
+  .funnel-card .frow span:first-child{color:var(--ink-soft);}
+  .funnel-card .frow span:last-child{font-weight:600;}
+  .funnel-card .rate{font-size:11px; color:var(--ink-faint); margin-top:8px; padding-top:8px; border-top:1px solid var(--border);}
+
+  @media (max-width:900px){
+    .kpi-grid{grid-template-columns:repeat(2,1fr);}
+    .grid2{grid-template-columns:1fr;}
+    .funnel-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <h1>Marketing Digital — Dashboard de acompanhamento</h1>
+      <p>Tuotempo Campinas · Tuotempo Indaiatuba · WhatsApp · Redes sociais (Meta 2026)</p>
+    </div>
+    <div class="updated" id="updatedLabel"></div>
+  </div>
+
+  <div class="controls">
+    <div class="seg" id="viewSeg">
+      <button data-view="mensal" class="active">Mensal</button>
+      <button data-view="acumulado">Acumulado</button>
+    </div>
+    <div class="channel-filter" id="channelFilter">
+      <div class="chip active" data-ch="campinas"><span class="dot"></span>Tuotempo Campinas</div>
+      <div class="chip active" data-ch="indaiatuba"><span class="dot"></span>Tuotempo Indaiatuba</div>
+      <div class="chip active" data-ch="whatsapp"><span class="dot"></span>WhatsApp</div>
+      <div class="chip active" data-ch="social"><span class="dot"></span>Redes sociais</div>
+    </div>
+  </div>
+
+  <div class="month-row" id="monthRow"></div>
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3 id="mainChartTitle">Consultas agendadas por mês</h3>
+      <p class="card-sub" id="mainChartSub">Comparativo entre canais</p>
+      <div class="chart-wrap" style="height:280px;">
+        <canvas id="mainChart" role="img" aria-label="Gráfico de barras comparando consultas agendadas por canal e por mês"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Mix de impressões — redes sociais</h3>
+      <p class="card-sub" id="socialSub">Período selecionado</p>
+      <div class="chart-wrap" style="height:230px;">
+        <canvas id="socialChart" role="img" aria-label="Gráfico de pizza mostrando a distribuição de impressões entre redes sociais"></canvas>
+      </div>
+      <div id="socialLegend" class="legend" style="margin-top:14px; margin-bottom:0;"></div>
+      <div id="socialGoalBox" style="margin-top:16px; padding-top:14px; border-top:1px solid var(--border);"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <h3 id="examesChartTitle">Exames agendados por mês</h3>
+    <p class="card-sub" id="examesChartSub">Comparativo entre canais</p>
+    <div class="chart-wrap" style="height:280px;">
+      <canvas id="examesChart" role="img" aria-label="Gráfico de barras comparando exames agendados por canal e por mês"></canvas>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;" id="lineChartCard">
+    <h3>Evolução de exames e consultas realizadas</h3>
+    <p class="card-sub">Tuotempo Campinas + Indaiatuba, mês a mês</p>
+    <div class="chart-wrap" style="height:260px;">
+      <canvas id="lineChart" role="img" aria-label="Gráfico de linha mostrando consultas realizadas e exames realizados ao longo dos meses"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Funil de conversão por canal</h3>
+    <p class="card-sub" id="funnelSub">Agendado → realizado, período selecionado</p>
+    <div class="funnel-grid" id="funnelGrid"></div>
+  </div>
+
+  <div class="section-title">Tabela detalhada por mês</div>
+  <div class="card" style="overflow-x:auto;">
+    <table id="detailTable"></table>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<script>
+Chart.register(ChartDataLabels);
+Chart.defaults.set('plugins.datalabels', { display: false });
+</script>
+<script>
+const DATA = {"tuotempo_campinas": [{"year": 2025, "month": 12, "label": "Dez/25", "consultas_agendadas": 66.0, "consultas_agendadas_valor": 6600, "consultas_realizadas": 24.0, "exames_agendados": 2.0, "exames_agendados_valor": 616, "exames_realizados": 1.0}, {"year": 2026, "month": 1, "label": "Jan/26", "consultas_agendadas": 166.0, "consultas_agendadas_valor": 16600, "consultas_realizadas": 106.0, "exames_agendados": 2.0, "exames_agendados_valor": 616, "exames_realizados": 3.0}, {"year": 2026, "month": 2, "label": "Fev/26", "consultas_agendadas": 114.0, "consultas_agendadas_valor": 11400, "consultas_realizadas": 0.0, "exames_agendados": 7.0, "exames_agendados_valor": 2156, "exames_realizados": 0.0}, {"year": 2026, "month": 3, "label": "Mar/26", "consultas_agendadas": 111.0, "consultas_agendadas_valor": 11100, "consultas_realizadas": 81.0, "exames_agendados": 17.0, "exames_agendados_valor": 5236, "exames_realizados": 4.0}, {"year": 2026, "month": 4, "label": "Abr/26", "consultas_agendadas": 110.0, "consultas_agendadas_valor": 11000, "consultas_realizadas": 68.0, "exames_agendados": 6.0, "exames_agendados_valor": 1848, "exames_realizados": 8.0}, {"year": 2026, "month": 5, "label": "Mai/26", "consultas_agendadas": 432.0, "consultas_agendadas_valor": 43200, "consultas_realizadas": 309.0, "exames_agendados": 52.0, "exames_agendados_valor": 16016, "exames_realizados": 38.0}, {"year": 2026, "month": 6, "label": "Jun/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 7, "label": "Jul/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 8, "label": "Ago/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 9, "label": "Set/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 10, "label": "Out/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 11, "label": "Nov/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 12, "label": "Dez/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}], "tuotempo_indaiatuba": [{"year": 2025, "month": 12, "label": "Dez/25", "consultas_agendadas": 38.0, "consultas_agendadas_valor": 3800, "consultas_realizadas": 20.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 1, "label": "Jan/26", "consultas_agendadas": 106.0, "consultas_agendadas_valor": 10600, "consultas_realizadas": 62.0, "exames_agendados": 4.0, "exames_agendados_valor": 1232, "exames_realizados": 4.0}, {"year": 2026, "month": 2, "label": "Fev/26", "consultas_agendadas": 55.0, "consultas_agendadas_valor": 5500, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 3, "label": "Mar/26", "consultas_agendadas": 61.0, "consultas_agendadas_valor": 6100, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 4, "label": "Abr/26", "consultas_agendadas": 27.0, "consultas_agendadas_valor": 2700, "consultas_realizadas": 22.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 5, "label": "Mai/26", "consultas_agendadas": 194.0, "consultas_agendadas_valor": 19400, "consultas_realizadas": 127.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 6, "label": "Jun/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 7, "label": "Jul/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 8, "label": "Ago/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 9, "label": "Set/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 10, "label": "Out/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 11, "label": "Nov/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}, {"year": 2026, "month": 12, "label": "Dez/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "consultas_realizadas": 0.0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "exames_realizados": 0.0}], "whatsapp": [{"year": 2025, "month": 12, "label": "Dez/25", "consultas_agendadas": 100.0, "consultas_agendadas_valor": 10000, "exames_agendados": 150.0, "exames_agendados_valor": 46200, "usuarios_alcancados": 92069.0}, {"year": 2026, "month": 1, "label": "Jan/26", "consultas_agendadas": 13.0, "consultas_agendadas_valor": 1300, "exames_agendados": 15.0, "exames_agendados_valor": 4620, "usuarios_alcancados": 30515.0}, {"year": 2026, "month": 2, "label": "Fev/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "exames_agendados": 207.0, "exames_agendados_valor": 63756, "usuarios_alcancados": 32060.0}, {"year": 2026, "month": 3, "label": "Mar/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "exames_agendados": 544.0, "exames_agendados_valor": 167552, "usuarios_alcancados": 123069.0}, {"year": 2026, "month": 4, "label": "Abr/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "exames_agendados": 547.0, "exames_agendados_valor": 168476, "usuarios_alcancados": 145227.0}, {"year": 2026, "month": 5, "label": "Mai/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "exames_agendados": 808.0, "exames_agendados_valor": 248864, "usuarios_alcancados": 221936.0}, {"year": 2026, "month": 6, "label": "Jun/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "usuarios_alcancados": 0.0}, {"year": 2026, "month": 7, "label": "Jul/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "usuarios_alcancados": 0.0}, {"year": 2026, "month": 8, "label": "Ago/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "usuarios_alcancados": 0.0}, {"year": 2026, "month": 9, "label": "Set/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "usuarios_alcancados": 0.0}, {"year": 2026, "month": 10, "label": "Out/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "usuarios_alcancados": 0.0}, {"year": 2026, "month": 11, "label": "Nov/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "usuarios_alcancados": 0.0}, {"year": 2026, "month": 12, "label": "Dez/26", "consultas_agendadas": 0.0, "consultas_agendadas_valor": 0, "exames_agendados": 0.0, "exames_agendados_valor": 0, "usuarios_alcancados": 0.0}], "redes_sociais": [{"year": 2026, "month": 1, "label": "Jan/26", "facebook": 1183295.0, "instagram": 1911406.0, "google": 1042859.0, "tiktok": 62000.0, "linkedin": 33139.0}, {"year": 2026, "month": 2, "label": "Fev/26", "facebook": 1333954.0, "instagram": 2039010.0, "google": 101790.0, "tiktok": 9700.0, "linkedin": 26974.0}, {"year": 2026, "month": 3, "label": "Mar/26", "facebook": 2094275.0, "instagram": 1989499.0, "google": 229536.0, "tiktok": 869300.0, "linkedin": 49080.0}, {"year": 2026, "month": 4, "label": "Abr/26", "facebook": 1880499.0, "instagram": 1782834.0, "google": 1275533.0, "tiktok": 1100000.0, "linkedin": 39588.0}, {"year": 2026, "month": 5, "label": "Mai/26", "facebook": 2313459.0, "instagram": 2576612.0, "google": 2473284.0, "tiktok": 1300000.0, "linkedin": 56705.0}, {"year": 2026, "month": 6, "label": "Jun/26", "facebook": 0, "instagram": 0, "google": 0, "tiktok": 0, "linkedin": 0}, {"year": 2026, "month": 7, "label": "Jul/26", "facebook": 0, "instagram": 0, "google": 0, "tiktok": 0, "linkedin": 0}, {"year": 2026, "month": 8, "label": "Ago/26", "facebook": 0, "instagram": 0, "google": 0, "tiktok": 0, "linkedin": 0}, {"year": 2026, "month": 9, "label": "Set/26", "facebook": 0, "instagram": 0, "google": 0, "tiktok": 0, "linkedin": 0}, {"year": 2026, "month": 10, "label": "Out/26", "facebook": 0, "instagram": 0, "google": 0, "tiktok": 0, "linkedin": 0}, {"year": 2026, "month": 11, "label": "Nov/26", "facebook": 0, "instagram": 0, "google": 0, "tiktok": 0, "linkedin": 0}, {"year": 2026, "month": 12, "label": "Dez/26", "facebook": 0, "instagram": 0, "google": 0, "tiktok": 0, "linkedin": 0}], "meta_2026_alcance": 122624187, "alcancado_2025": 106629728};
+
+const COLORS = {
+  campinas: '#0F6E56',
+  indaiatuba: '#185FA5',
+  whatsapp: '#D85A30',
+  social: '#854F0B',
+  facebook: '#185FA5',
+  instagram: '#D4537E',
+  google: '#854F0B',
+  tiktok: '#1C2624',
+  linkedin: '#378ADD'
+};
+
+const state = { view: 'mensal', channels: new Set(['campinas','indaiatuba','whatsapp','social']), selectedMonth: null };
+
+const allMonths = DATA.tuotempo_campinas.map(r => ({year:r.year, month:r.month, label:r.label}));
+function hasAnyData(idx){
+  const c = DATA.tuotempo_campinas[idx], i = DATA.tuotempo_indaiatuba[idx], w = DATA.whatsapp[idx];
+  const s = DATA.redes_sociais.find(r => r.year===c.year && r.month===c.month);
+  const sTotal = s ? (s.facebook+s.instagram+s.google+s.tiktok+s.linkedin) : 0;
+  return (c.consultas_agendadas + c.exames_agendados + i.consultas_agendadas + i.exames_agendados + w.consultas_agendadas + w.exames_agendados + sTotal) > 0;
+}
+const EXCLUDED = new Set(['2025-12']);
+const activeMonths = allMonths
+  .map((m,idx)=>({...m, idx}))
+  .filter((m)=>hasAnyData(m.idx))
+  .filter((m)=>!EXCLUDED.has(`${m.year}-${m.month}`));
+state.selectedMonth = activeMonths.length ? activeMonths[activeMonths.length-1].idx : 0;
+
+function fmt(n){ return Math.round(n).toLocaleString('pt-BR'); }
+
+// Retorna array de cores: cor cheia no mês selecionado, transparente nos demais
+function barColors(hexColor){
+  return activeMonths.map(m => m.idx === state.selectedMonth ? hexColor : hexColor + '33');
+}
+function fmtBRL(n){ return 'R$ ' + Math.round(n).toLocaleString('pt-BR'); }
+function fmtCompact(n){
+  n = Math.round(n);
+  if(n >= 1000000) return (n/1000000).toFixed(1).replace('.0','') + 'M';
+  if(n >= 1000) return (n/1000).toFixed(1).replace('.0','') + 'k';
+  return String(n);
+}
+function pct(n){ return (n*100).toFixed(1).replace('.0','') + '%'; }
+
+function getSocialRow(idx){
+  const ref = DATA.tuotempo_campinas[idx];
+  return DATA.redes_sociais.find(r => r.year===ref.year && r.month===ref.month) || {facebook:0,instagram:0,google:0,tiktok:0,linkedin:0};
+}
+
+function sumRange(arr, key, fromIdx, toIdx){
+  let s = 0;
+  for(let i=fromIdx;i<=toIdx;i++) s += (arr[i] ? arr[i][key]||0 : 0);
+  return s;
+}
+function socialSumRange(fromIdx, toIdx, key){
+  let s = 0;
+  for(let i=fromIdx;i<=toIdx;i++) s += getSocialRow(i)[key]||0;
+  return s;
+}
+
+function renderMonthRow(){
+  const row = document.getElementById('monthRow');
+  row.innerHTML = '';
+  if(state.view === 'acumulado'){
+    row.style.display = 'none';
+    return;
+  }
+  row.style.display = 'flex';
+  activeMonths.forEach(m=>{
+    const btn = document.createElement('button');
+    btn.textContent = m.label;
+    if(m.idx === state.selectedMonth) btn.classList.add('active');
+    btn.onclick = ()=>{ state.selectedMonth = m.idx; render(); };
+    row.appendChild(btn);
+  });
+}
+
+function currentRange(){
+  if(state.view === 'mensal') return [state.selectedMonth, state.selectedMonth];
+  return [activeMonths[0].idx, activeMonths[activeMonths.length-1].idx];
+}
+
+function channelOn(ch){ return state.channels.has(ch); }
+
+let charts = {};
+function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+
+function renderKPIs(){
+  const [from,to] = currentRange();
+  const grid = document.getElementById('kpiGrid');
+  grid.innerHTML = '';
+
+  let consultasAg = 0, consultasReal = 0, examesAg = 0, valorTotal = 0, alcanceWpp = 0, impressoes = 0;
+
+  if(channelOn('campinas')){
+    consultasAg += sumRange(DATA.tuotempo_campinas,'consultas_agendadas',from,to);
+    consultasReal += sumRange(DATA.tuotempo_campinas,'consultas_realizadas',from,to);
+    examesAg += sumRange(DATA.tuotempo_campinas,'exames_agendados',from,to);
+    valorTotal += sumRange(DATA.tuotempo_campinas,'consultas_agendadas_valor',from,to) + sumRange(DATA.tuotempo_campinas,'exames_agendados_valor',from,to);
+  }
+  if(channelOn('indaiatuba')){
+    consultasAg += sumRange(DATA.tuotempo_indaiatuba,'consultas_agendadas',from,to);
+    consultasReal += sumRange(DATA.tuotempo_indaiatuba,'consultas_realizadas',from,to);
+    examesAg += sumRange(DATA.tuotempo_indaiatuba,'exames_agendados',from,to);
+    valorTotal += sumRange(DATA.tuotempo_indaiatuba,'consultas_agendadas_valor',from,to) + sumRange(DATA.tuotempo_indaiatuba,'exames_agendados_valor',from,to);
+  }
+  if(channelOn('whatsapp')){
+    consultasAg += sumRange(DATA.whatsapp,'consultas_agendadas',from,to);
+    examesAg += sumRange(DATA.whatsapp,'exames_agendados',from,to);
+    valorTotal += sumRange(DATA.whatsapp,'consultas_agendadas_valor',from,to) + sumRange(DATA.whatsapp,'exames_agendados_valor',from,to);
+    alcanceWpp += sumRange(DATA.whatsapp,'usuarios_alcancados',from,to);
+  }
+  if(channelOn('social')){
+    ['facebook','instagram','google','tiktok','linkedin'].forEach(k=>{ impressoes += socialSumRange(from,to,k); });
+  }
+
+  function prevRangeDelta(getter){
+    if(state.view !== 'mensal') return null;
+    const prevIdx = activeMonths.findIndex(m=>m.idx===from) - 1;
+    if(prevIdx < 0) return null;
+    const prevMonthIdx = activeMonths[prevIdx].idx;
+    const cur = getter(from,to), prev = getter(prevMonthIdx,prevMonthIdx);
+    if(prev === 0) return null;
+    return (cur-prev)/prev;
+  }
+
+  const cards = [
+    {label:'Consultas agendadas', value: fmt(consultasAg), sw:null,
+      delta: prevRangeDelta((f,t)=>{
+        let v=0;
+        if(channelOn('campinas')) v+=sumRange(DATA.tuotempo_campinas,'consultas_agendadas',f,t);
+        if(channelOn('indaiatuba')) v+=sumRange(DATA.tuotempo_indaiatuba,'consultas_agendadas',f,t);
+        if(channelOn('whatsapp')) v+=sumRange(DATA.whatsapp,'consultas_agendadas',f,t);
+        return v;
+      })},
+    {label:'Consultas realizadas', value: fmt(consultasReal), sub: consultasAg>0 ? 'Taxa de conversão: '+pct(consultasReal/consultasAg) : null},
+    {label:'Exames agendados', value: fmt(examesAg)},
+    {label:'Valor estimado gerado', value: fmtBRL(valorTotal), sub:'Consultas + exames agendados'},
+    {label:'Alcance total', value: fmtCompact(alcanceWpp + impressoes), sub:'WhatsApp + impressões redes sociais'}
+  ];
+
+  if(channelOn('social')){
+    let impressoesTotalGeral = 0;
+    ['facebook','instagram','google','tiktok','linkedin'].forEach(k=>{
+      impressoesTotalGeral += socialSumRange(activeMonths[0].idx, activeMonths[activeMonths.length-1].idx, k);
+    });
+    const metaPct = impressoesTotalGeral / DATA.meta_2026_alcance;
+    cards.push({
+      label:'Meta de impressões 2026', value: fmtCompact(impressoesTotalGeral),
+      sub:`Meta: ${fmtCompact(DATA.meta_2026_alcance)} · ${pct(metaPct)} atingido`,
+      progress: Math.min(metaPct,1)
+    });
+  }
+
+  cards.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'kpi';
+    let deltaHtml = '';
+    if(c.delta !== null && c.delta !== undefined){
+      const cls = c.delta > 0.001 ? 'up' : c.delta < -0.001 ? 'down' : 'flat';
+      const sign = c.delta > 0 ? '+' : '';
+      deltaHtml = `<span class="delta ${cls}">${sign}${pct(c.delta)} vs. mês anterior</span>`;
+    }
+    let progressHtml = '';
+    if(c.progress !== undefined){
+      progressHtml = `<div class="progress-track"><div class="progress-fill" style="width:${(c.progress*100).toFixed(1)}%"></div></div>`;
+    }
+    div.innerHTML = `
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}</div>
+      ${c.sub ? `<div class="sub">${c.sub}</div>` : ''}
+      ${deltaHtml}
+      ${progressHtml}
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function renderMainChart(){
+  const ctx = document.getElementById('mainChart');
+  destroyChart('main');
+  const title = document.getElementById('mainChartTitle');
+  const sub = document.getElementById('mainChartSub');
+
+  let labels, datasets;
+
+  if(state.view === 'mensal'){
+    title.textContent = 'Consultas agendadas por mês';
+    sub.textContent = 'Comparativo entre canais, todos os meses com dados';
+    labels = activeMonths.map(m=>m.label);
+    datasets = [];
+    if(channelOn('campinas')) datasets.push({label:'Tuotempo Campinas', data: activeMonths.map(m=>DATA.tuotempo_campinas[m.idx].consultas_agendadas), backgroundColor: barColors(COLORS.campinas)});
+    if(channelOn('indaiatuba')) datasets.push({label:'Tuotempo Indaiatuba', data: activeMonths.map(m=>DATA.tuotempo_indaiatuba[m.idx].consultas_agendadas), backgroundColor: barColors(COLORS.indaiatuba)});
+    if(channelOn('whatsapp')) datasets.push({label:'WhatsApp', data: activeMonths.map(m=>DATA.whatsapp[m.idx].consultas_agendadas), backgroundColor: barColors(COLORS.whatsapp)});
+  } else {
+    title.textContent = 'Consultas agendadas — total do período';
+    sub.textContent = `Somatório de ${activeMonths[0].label} a ${activeMonths[activeMonths.length-1].label}, por canal`;
+    const [from,to] = currentRange();
+    labels = [];
+    const totalsByChannel = [];
+    if(channelOn('campinas')){ labels.push('Tuotempo Campinas'); totalsByChannel.push({v:sumRange(DATA.tuotempo_campinas,'consultas_agendadas',from,to), c:COLORS.campinas}); }
+    if(channelOn('indaiatuba')){ labels.push('Tuotempo Indaiatuba'); totalsByChannel.push({v:sumRange(DATA.tuotempo_indaiatuba,'consultas_agendadas',from,to), c:COLORS.indaiatuba}); }
+    if(channelOn('whatsapp')){ labels.push('WhatsApp'); totalsByChannel.push({v:sumRange(DATA.whatsapp,'consultas_agendadas',from,to), c:COLORS.whatsapp}); }
+    datasets = [{ label:'Total no período', data: totalsByChannel.map(t=>t.v), backgroundColor: totalsByChannel.map(t=>t.c) }];
+  }
+
+  charts.main = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:false },
+        datalabels:{
+          display: true,
+          anchor:'end', align:'end', offset:2,
+          font:{ size:11, weight:'600' },
+          color: '#1C2624',
+          formatter:(value, ctx2)=>{
+            if(datasets.length <= 1) return fmt(value);
+            const dataIndex = ctx2.dataIndex;
+            const total = datasets.reduce((sum,ds)=>sum+(ds.data[dataIndex]||0),0);
+            return ctx2.datasetIndex === datasets.length-1 ? fmt(total) : null;
+          }
+        }
+      },
+      scales:{ y:{ beginAtZero:true, ticks:{ callback:(v)=>fmtCompact(v) } }, x:{ ticks:{ autoSkip:false, maxRotation:45 } } },
+      layout:{ padding:{ top:20 } }
+    }
+  });
+}
+
+function renderExamesChart(){
+  const ctx = document.getElementById('examesChart');
+  destroyChart('exames');
+  const title = document.getElementById('examesChartTitle');
+  const sub = document.getElementById('examesChartSub');
+
+  let labels, datasets;
+
+  if(state.view === 'mensal'){
+    title.textContent = 'Exames agendados por mês';
+    sub.textContent = 'Comparativo entre canais, todos os meses com dados';
+    labels = activeMonths.map(m=>m.label);
+    datasets = [];
+    if(channelOn('campinas')) datasets.push({label:'Tuotempo Campinas', data: activeMonths.map(m=>DATA.tuotempo_campinas[m.idx].exames_agendados), backgroundColor: barColors(COLORS.campinas)});
+    if(channelOn('indaiatuba')) datasets.push({label:'Tuotempo Indaiatuba', data: activeMonths.map(m=>DATA.tuotempo_indaiatuba[m.idx].exames_agendados), backgroundColor: barColors(COLORS.indaiatuba)});
+    if(channelOn('whatsapp')) datasets.push({label:'WhatsApp', data: activeMonths.map(m=>DATA.whatsapp[m.idx].exames_agendados), backgroundColor: barColors(COLORS.whatsapp)});
+  } else {
+    title.textContent = 'Exames agendados — total do período';
+    sub.textContent = `Somatório de ${activeMonths[0].label} a ${activeMonths[activeMonths.length-1].label}, por canal`;
+    const [from,to] = currentRange();
+    labels = [];
+    const totalsByChannel = [];
+    if(channelOn('campinas')){ labels.push('Tuotempo Campinas'); totalsByChannel.push({v:sumRange(DATA.tuotempo_campinas,'exames_agendados',from,to), c:COLORS.campinas}); }
+    if(channelOn('indaiatuba')){ labels.push('Tuotempo Indaiatuba'); totalsByChannel.push({v:sumRange(DATA.tuotempo_indaiatuba,'exames_agendados',from,to), c:COLORS.indaiatuba}); }
+    if(channelOn('whatsapp')){ labels.push('WhatsApp'); totalsByChannel.push({v:sumRange(DATA.whatsapp,'exames_agendados',from,to), c:COLORS.whatsapp}); }
+    datasets = [{ label:'Total no período', data: totalsByChannel.map(t=>t.v), backgroundColor: totalsByChannel.map(t=>t.c) }];
+  }
+
+  charts.exames = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:true, ticks:{ callback:(v)=>fmtCompact(v) } }, x:{ ticks:{ autoSkip:false, maxRotation:45 } } }
+    }
+  });
+}
+
+function renderSocialChart(){
+  const ctx = document.getElementById('socialChart');
+  destroyChart('social');
+  const [from,to] = currentRange();
+  document.getElementById('socialSub').textContent = state.view==='mensal' ? activeMonths.find(m=>m.idx===state.selectedMonth).label : `Total de ${activeMonths[0].label} a ${activeMonths[activeMonths.length-1].label}`;
+
+  const keys = ['facebook','instagram','google','tiktok','linkedin'];
+  const labelsMap = {facebook:'Facebook', instagram:'Instagram', google:'Google', tiktok:'TikTok', linkedin:'LinkedIn'};
+  const values = keys.map(k=>socialSumRange(from,to,k));
+  const total = values.reduce((a,b)=>a+b,0);
+
+  charts.social = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels: keys.map(k=>labelsMap[k]), datasets:[{ data: values, backgroundColor: keys.map(k=>COLORS[k]), borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, cutout:'62%' }
+  });
+
+  const legendDiv = document.getElementById('socialLegend');
+  legendDiv.innerHTML = keys.map((k,i)=>{
+    const p = total>0 ? (values[i]/total*100).toFixed(1).replace('.0','') : '0';
+    return `<span><span class="sw" style="background:${COLORS[k]}"></span>${labelsMap[k]} · ${p}%</span>`;
+  }).join('');
+
+  const goalBox = document.getElementById('socialGoalBox');
+  let impressoesTotalGeral = 0;
+  keys.forEach(k=>{ impressoesTotalGeral += socialSumRange(activeMonths[0].idx, activeMonths[activeMonths.length-1].idx, k); });
+  const metaPct = impressoesTotalGeral / DATA.meta_2026_alcance;
+  goalBox.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;">
+      <span style="font-size:12px; color:var(--ink-soft); font-weight:500;">Meta de impressões 2026</span>
+      <span style="font-size:12px; font-weight:600;">${pct(metaPct)}</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" style="width:${(Math.min(metaPct,1)*100).toFixed(1)}%"></div></div>
+    <div style="font-size:11.5px; color:var(--ink-faint); margin-top:6px;">${fmt(impressoesTotalGeral)} de ${fmt(DATA.meta_2026_alcance)} impressões — total do período disponível</div>
+  `;
+}
+
+function renderLineChart(){
+  const card = document.getElementById('lineChartCard');
+  if(state.view === 'acumulado'){
+    card.style.display = 'none';
+    destroyChart('line');
+    return;
+  }
+  card.style.display = 'block';
+  const ctx = document.getElementById('lineChart');
+  destroyChart('line');
+  const labels = activeMonths.map(m=>m.label);
+  const datasets = [];
+  if(channelOn('campinas') || channelOn('indaiatuba')){
+    const realizadas = activeMonths.map(m=>{
+      let v = 0;
+      if(channelOn('campinas')) v += DATA.tuotempo_campinas[m.idx].consultas_realizadas;
+      if(channelOn('indaiatuba')) v += DATA.tuotempo_indaiatuba[m.idx].consultas_realizadas;
+      return v;
+    });
+    const examesReal = activeMonths.map(m=>{
+      let v = 0;
+      if(channelOn('campinas')) v += DATA.tuotempo_campinas[m.idx].exames_realizados;
+      if(channelOn('indaiatuba')) v += DATA.tuotempo_indaiatuba[m.idx].exames_realizados;
+      return v;
+    });
+    datasets.push({label:'Consultas realizadas', data: realizadas, borderColor: COLORS.campinas, backgroundColor: COLORS.campinas, fill:false, tension:.3});
+    datasets.push({label:'Exames realizados', data: examesReal, borderColor: COLORS.whatsapp, backgroundColor: COLORS.whatsapp, fill:false, tension:.3, borderDash:[5,3]});
+  }
+  charts.line = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:true }, x:{ ticks:{ autoSkip:false, maxRotation:45 } } }
+    }
+  });
+  renderCustomLegend('lineChart', datasets);
+}
+
+function renderCustomLegend(canvasId, datasets){
+  const canvas = document.getElementById(canvasId);
+  let legend = canvas.parentElement.nextElementSibling;
+}
+
+function renderFunnel(){
+  const [from,to] = currentRange();
+  const grid = document.getElementById('funnelGrid');
+  grid.innerHTML = '';
+  document.getElementById('funnelSub').textContent = state.view==='mensal' ? activeMonths.find(m=>m.idx===state.selectedMonth).label : `Total de ${activeMonths[0].label} a ${activeMonths[activeMonths.length-1].label}`;
+
+  const channels = [
+    {key:'campinas', name:'Tuotempo Campinas', data:DATA.tuotempo_campinas, hasReal:true},
+    {key:'indaiatuba', name:'Tuotempo Indaiatuba', data:DATA.tuotempo_indaiatuba, hasReal:true},
+    {key:'whatsapp', name:'WhatsApp', data:DATA.whatsapp, hasReal:false}
+  ];
+
+  channels.forEach(ch=>{
+    if(!channelOn(ch.key)) return;
+    const ag = sumRange(ch.data,'consultas_agendadas',from,to);
+    const exAg = sumRange(ch.data,'exames_agendados',from,to);
+    const card = document.createElement('div');
+    card.className = 'funnel-card';
+    let rows = `
+      <div class="frow"><span>Consultas agendadas</span><span>${fmt(ag)}</span></div>
+      <div class="frow"><span>Exames agendados</span><span>${fmt(exAg)}</span></div>
+    `;
+    let rateHtml = '';
+    if(ch.hasReal){
+      const real = sumRange(ch.data,'consultas_realizadas',from,to);
+      const exReal = sumRange(ch.data,'exames_realizados',from,to);
+      rows += `
+        <div class="frow"><span>Consultas realizadas</span><span>${fmt(real)}</span></div>
+        <div class="frow"><span>Exames realizados</span><span>${fmt(exReal)}</span></div>
+      `;
+      rateHtml = `<div class="rate">Conversão agendado → realizado: ${ag>0 ? pct(real/ag) : '—'}</div>`;
+    } else {
+      const alc = sumRange(ch.data,'usuarios_alcancados',from,to);
+      rateHtml = `<div class="rate">Usuários alcançados: ${fmt(alc)}</div>`;
+    }
+    card.innerHTML = `<div class="ftitle">${ch.name}</div>${rows}${rateHtml}`;
+    grid.appendChild(card);
+  });
+}
+
+function renderTable(){
+  const table = document.getElementById('detailTable');
+  const cols = [];
+  if(channelOn('campinas')) cols.push({key:'campinas', name:'Campinas'});
+  if(channelOn('indaiatuba')) cols.push({key:'indaiatuba', name:'Indaiatuba'});
+  if(channelOn('whatsapp')) cols.push({key:'whatsapp', name:'WhatsApp'});
+  if(channelOn('social')) cols.push({key:'social', name:'Impressões redes'});
+
+  const firstColLabel = state.view === 'mensal' ? 'Mês' : 'Período';
+  let thead = `<thead><tr><th>${firstColLabel}</th>`;
+  cols.forEach(c=>{ thead += `<th>${c.name}${c.key==='social' ? ' — impressões' : ' — agendado'}</th>`; });
+  thead += '<th>Total agendado</th><th>Valor estimado</th></tr></thead>';
+
+  let rowsHtml = '';
+  let totals = { agByCol: cols.map(()=>0), totalAg:0, totalValor:0 };
+
+  const monthsToShow = state.view === 'mensal' ? activeMonths : [];
+
+  monthsToShow.forEach(m=>{
+    let rowTotalAg = 0, rowTotalValor = 0;
+    let cells = '';
+    cols.forEach((c,i)=>{
+      let v = 0, valor = 0;
+      if(c.key==='campinas'){ v = DATA.tuotempo_campinas[m.idx].consultas_agendadas + DATA.tuotempo_campinas[m.idx].exames_agendados; valor = DATA.tuotempo_campinas[m.idx].consultas_agendadas_valor + DATA.tuotempo_campinas[m.idx].exames_agendados_valor; }
+      if(c.key==='indaiatuba'){ v = DATA.tuotempo_indaiatuba[m.idx].consultas_agendadas + DATA.tuotempo_indaiatuba[m.idx].exames_agendados; valor = DATA.tuotempo_indaiatuba[m.idx].consultas_agendadas_valor + DATA.tuotempo_indaiatuba[m.idx].exames_agendados_valor; }
+      if(c.key==='whatsapp'){ v = DATA.whatsapp[m.idx].consultas_agendadas + DATA.whatsapp[m.idx].exames_agendados; valor = DATA.whatsapp[m.idx].consultas_agendadas_valor + DATA.whatsapp[m.idx].exames_agendados_valor; }
+      if(c.key==='social'){ const s = getSocialRow(m.idx); v = s.facebook+s.instagram+s.google+s.tiktok+s.linkedin; valor = 0; }
+      cells += `<td>${fmt(v)}</td>`;
+      if(c.key !== 'social'){ rowTotalAg += v; rowTotalValor += valor; }
+      totals.agByCol[i] += v;
+    });
+    totals.totalAg += rowTotalAg;
+    totals.totalValor += rowTotalValor;
+    rowsHtml += `<tr><td>${m.label}</td>${cells}<td>${fmt(rowTotalAg)}</td><td>${fmtBRL(rowTotalValor)}</td></tr>`;
+  });
+
+  if(state.view === 'acumulado'){
+    const [from,to] = currentRange();
+    cols.forEach((c,i)=>{
+      let v = 0;
+      if(c.key==='campinas'){ v = sumRange(DATA.tuotempo_campinas,'consultas_agendadas',from,to) + sumRange(DATA.tuotempo_campinas,'exames_agendados',from,to); totals.totalValor += sumRange(DATA.tuotempo_campinas,'consultas_agendadas_valor',from,to) + sumRange(DATA.tuotempo_campinas,'exames_agendados_valor',from,to); }
+      if(c.key==='indaiatuba'){ v = sumRange(DATA.tuotempo_indaiatuba,'consultas_agendadas',from,to) + sumRange(DATA.tuotempo_indaiatuba,'exames_agendados',from,to); totals.totalValor += sumRange(DATA.tuotempo_indaiatuba,'consultas_agendadas_valor',from,to) + sumRange(DATA.tuotempo_indaiatuba,'exames_agendados_valor',from,to); }
+      if(c.key==='whatsapp'){ v = sumRange(DATA.whatsapp,'consultas_agendadas',from,to) + sumRange(DATA.whatsapp,'exames_agendados',from,to); totals.totalValor += sumRange(DATA.whatsapp,'consultas_agendadas_valor',from,to) + sumRange(DATA.whatsapp,'exames_agendados_valor',from,to); }
+      if(c.key==='social'){ v = ['facebook','instagram','google','tiktok','linkedin'].reduce((s,k)=>s+socialSumRange(from,to,k),0); }
+      totals.agByCol[i] = v;
+      if(c.key !== 'social') totals.totalAg += v;
+    });
+  }
+
+  let totalLabel = state.view === 'mensal' ? 'Total acumulado' : `${activeMonths[0].label} a ${activeMonths[activeMonths.length-1].label}`;
+  let totalCells = totals.agByCol.map(v=>`<td>${fmt(v)}</td>`).join('');
+  rowsHtml += `<tr class="total"><td>${totalLabel}</td>${totalCells}<td>${fmt(totals.totalAg)}</td><td>${fmtBRL(totals.totalValor)}</td></tr>`;
+
+  table.innerHTML = thead + '<tbody>' + rowsHtml + '</tbody>';
+}
+
+function render(){
+  renderMonthRow();
+  renderKPIs();
+  renderMainChart();
+  renderExamesChart();
+  renderSocialChart();
+  renderLineChart();
+  renderFunnel();
+  renderTable();
+}
+
+document.getElementById('viewSeg').addEventListener('click', e=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  document.querySelectorAll('#viewSeg button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state.view = btn.dataset.view;
+  render();
+});
+
+document.getElementById('channelFilter').addEventListener('click', e=>{
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  const ch = chip.dataset.ch;
+  if(state.channels.has(ch)){
+    if(state.channels.size === 1) return;
+    state.channels.delete(ch);
+    chip.classList.remove('active');
+  } else {
+    state.channels.add(ch);
+    chip.classList.add('active');
+  }
+  render();
+});
+
+document.getElementById('updatedLabel').textContent = 'Dados até ' + activeMonths[activeMonths.length-1].label;
+
+render();
+</script>
+</body>
+</html>
